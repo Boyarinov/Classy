@@ -184,15 +184,15 @@ class Class(object):
                     om.refresh()
                     self.vmethods.append(om)
             elif Method.s_is_pure_virtual_dst(dst):                 # New pure virtual
-                pvm = PureVirtualMethod(self, 'vf%X' % (idx*pointer_size), idx)
+                pvm = PureVirtualMethod(self, 'vf%X' % (idx), idx)
                 pvm.refresh()
                 self.vmethods.append(pvm)
             elif Method.s_is_deleted_virtual_dst(dst):              # New deleted virtual
-                pvm = DeletedVirtualMethod(self, 'vf%X' % (idx*pointer_size), idx)
+                pvm = DeletedVirtualMethod(self, 'vf%X' % (idx), idx)
                 pvm.refresh()
                 self.vmethods.append(pvm)
             else:                                                   # New virtual
-                vm = VirtualMethod(dst, self, 'vf%X' % (idx*pointer_size), idx)
+                vm = VirtualMethod(dst, self, 'vf%X' % (idx), idx)
                 vm.refresh()
                 self.vmethods.append(vm)
 
