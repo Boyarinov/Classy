@@ -102,14 +102,17 @@ class Class(object):
 
 
     def set_vtable_range(self, start, end):
+        byte_size = 4
+        if idc.__EA64__:
+            byte_size = 8
         if self.is_vtable_locked():
             raise ValueError('VTable cannot be modified because the class has derived classes')
-        if start % 4 or end % 4:
+        if start % byte_size or end % byte_size:
             raise ValueError('VTable start and end must be 4 byte aligned')
         if start >= end:
             raise ValueError('Vtable end must be after the start')
         if self.base:
-            new_len = (end - start) // 4
+            new_len = (end - start) // byte_size
             if new_len < len(self.base.vmethods):
                 raise ValueError('VTable is smaller than base VTable')
         # Todo: More sanity checks: Don't overwrite any other vtable
@@ -164,7 +167,6 @@ class Class(object):
             pfn_make_ptr(ea)
             idc.op_plain_offset(ea, 0, 0)
             dst = pfn_get_ptr_value(ea)
-
             if idx < my_start_idx:
                 base_method = self.base.vmethods[idx]
                 if base_method.is_dst_equal(dst):                   # Method from base class
@@ -182,15 +184,15 @@ class Class(object):
                     om.refresh()
                     self.vmethods.append(om)
             elif Method.s_is_pure_virtual_dst(dst):                 # New pure virtual
-                pvm = PureVirtualMethod(self, 'vf%X' % (idx*4), idx)
+                pvm = PureVirtualMethod(self, 'vf%X' % (idx*pointer_size), idx)
                 pvm.refresh()
                 self.vmethods.append(pvm)
             elif Method.s_is_deleted_virtual_dst(dst):              # New deleted virtual
-                pvm = DeletedVirtualMethod(self, 'vf%X' % (idx*4), idx)
+                pvm = DeletedVirtualMethod(self, 'vf%X' % (idx*pointer_size), idx)
                 pvm.refresh()
                 self.vmethods.append(pvm)
             else:                                                   # New virtual
-                vm = VirtualMethod(dst, self, 'vf%X' % (idx*4), idx)
+                vm = VirtualMethod(dst, self, 'vf%X' % (idx*pointer_size), idx)
                 vm.refresh()
                 self.vmethods.append(vm)
 
@@ -198,7 +200,7 @@ class Class(object):
     def get_vtable_index_ea(self, idx):
         if idx > len(self.vmethods):
             raise ValueError('get_vtable_index_ea for out of range index')
-        return self.vtable_start + (idx*4)
+        return self.vtable_start + (idx*idaapi.DEF_ADDRSIZE)
 
 
     def iter_vtable(self):
@@ -207,7 +209,7 @@ class Class(object):
 
         while ea <= end:
             yield (ea, idc.get_wide_dword(ea))
-            ea += 4
+            ea += idaapi.DEF_ADDRSIZE
 
 
     def set_struct_id(self, new_struct_id, delete_orphaned=False):
